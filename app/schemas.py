@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from decimal import Decimal
-
+from datetime import datetime
 
 class CategoryCreate(BaseModel):
     """
@@ -39,7 +39,6 @@ class ProductCreate(BaseModel):
     stock: int = Field(..., ge=0, description="Количество товара на складе (0 или больше)")
     category_id: int = Field(..., description="ID категории, к которой относится товар")
 
-
 class Product(BaseModel):
     """
     Модель для ответа с данными товара.
@@ -53,16 +52,24 @@ class Product(BaseModel):
     stock: int = Field(..., description="Количество товара на складе")
     category_id: int = Field(..., description="ID категории")
     is_active: bool = Field(..., description="Активность товара")
+    rating: float
 
     model_config = ConfigDict(from_attributes=True)
     
-    
+class ProductList(BaseModel):
+    """
+    Список пагинации для товаров.
+    """
+    items: list[Product] = Field(description="Товары для текущей страницы")
+    total: int = Field(ge=0, description="Общее количество товаров")
+    page: int = Field(ge=1, description="Номер текущей страницы")
+    page_size: int = Field(ge=1, description="Количество элементов на странице")
+
 
 class UserCreate(BaseModel):
     email: EmailStr = Field(description="Email пользователя")
     password: str = Field(min_length=8, description="Пароль (минимум 8 символов)")
     role: str = Field(default="buyer", pattern="^(buyer|seller)$", description="Роль: 'buyer' или 'seller'")
-
 
 class User(BaseModel):
     id: int
@@ -73,3 +80,28 @@ class User(BaseModel):
     
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+    
+    
+class ReviewCreate(BaseModel):
+    product_id: int
+    comment: str = Field(default='')
+    grade: int = Field(..., ge=1, le=5)
+
+class Review(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
+    id: int 
+    
+    product_id: int
+    comment: str 
+    grade: int = Field(..., ge=1, le=5)
+    
+    comment_date: datetime 
+    is_active: bool = Field(default=True)
+    user_id: int
+    product_id: int
+    
+class ReviewUpdate(BaseModel):
+    comment: str | None = None
+    grade: int = Field(default=None, ge=1, le=5)
+    is_active: bool = True
